@@ -31,11 +31,17 @@ public class GameController : MonoBehaviour {
 			players[activePlayer].homeCity = pc;
 			pc.influence[activePlayer] = true;
 			myUI.UpdateInfluence();
-			pc.gameComponents.Add(new Peasant(activePlayer, pc)); // testing
-			pc.gameComponents.Add(new Peasant(activePlayer, pc)); // testing
-			pc.gameComponents.Add(new Burgher(activePlayer)); // testing
-			pc.gameComponents.Add(new Burgher(activePlayer)); // testing
-			pc.gameComponents.Add(new Burgher(activePlayer)); // testing
+			pc.gameComponents.Add(new Peasant(activePlayer, pc));
+			pc.gameComponents.Add(new Peasant(activePlayer, pc));
+			pc.gameComponents.Add(new Burgher(activePlayer));
+			pc.gameComponents.Add(new Burgher(activePlayer));
+			pc.gameComponents.Add(new Burgher(activePlayer));
+			players[activePlayer].IncreaseCommodity(Commodity.CommodityType.Wheat, 4);
+			players[activePlayer].IncreaseCommodity(Commodity.CommodityType.WildGame, 4);
+			players[activePlayer].IncreaseCommodity(Commodity.CommodityType.Wood, 4);
+			players[activePlayer].IncreaseCommodity(Commodity.CommodityType.Ore, 4);
+			players[activePlayer].IncreaseCommodity(Commodity.CommodityType.Stone, 4);
+			players[activePlayer].IncreaseCommodity(Commodity.CommodityType.Spidersilk, 4);
 			NextPlayer();
 		}
 		nextPlayer = true;
@@ -449,7 +455,7 @@ public class GameController : MonoBehaviour {
 		myUI.TogglePanel(myUI.explorePanel);
 		myUI.actionText.text = "Please choose a terrain to place.";
 		int firstIndex = UnityEngine.Random.Range(0, board.exoticTerrain.Count);
-		matOne = board.localTerrain.ElementAt(firstIndex);
+		matOne = board.exoticTerrain.ElementAt(firstIndex);
 		board.exoticTerrain.RemoveAt(firstIndex);
 		myUI.terrainOne.text = matOne.ToString();
 		int secondIndex = UnityEngine.Random.Range(0, board.exoticTerrain.Count);
@@ -812,8 +818,9 @@ public class GameController : MonoBehaviour {
 	 	}  
 	}
 	#endregion
-	// final action in end of turn
-	private void Harvest(){
+// Final action in end of turn. Iterates through all tiles and makes producing components give their relative commodites
+// to the controlling players.  Some harvesting is contingent on building prerequisites
+	private void Harvest(){ 
 		List<Peasant> peasants = new List<Peasant>();
 		List<Refinery> refineries = new List<Refinery>();
 		List<AdvancedRefinery> advRefineries = new List<AdvancedRefinery>();
@@ -836,6 +843,16 @@ public class GameController : MonoBehaviour {
 		}
 		foreach(Peasant p in peasants){
 			p.GenerateResource(players[p.playerController]);
+			if((players[p.playerController].homeCity.gameComponents.Where(b => b.GetType() == typeof(Botanist)).Any() 
+				&& p.tile.tt == Tile.TerrainType.Fields) || (players[p.playerController].homeCity.gameComponents.Where(b => 
+				b.GetType() == typeof(DruidsCircle)).Any() && p.tile.tt == Tile.TerrainType.Forest) ||
+				(players[p.playerController].homeCity.gameComponents.Where(b => b.GetType() == typeof(Ranch)).Any() 
+				&& p.tile.tt == Tile.TerrainType.Hills) || (players[p.playerController].homeCity.gameComponents.Where
+				(b => b.GetType() == typeof(AdventurersGuild)).Any() && p.tile.tt == Tile.TerrainType.Badlands) || 
+				(players[p.playerController].homeCity.gameComponents.Where(b => b.GetType() == typeof(MinersGuild)).Any() 
+				&& p.tile.tt == Tile.TerrainType.Mountains)){
+				p.GenerateAdvancedResource(players[p.playerController]);
+			}
 			p.hasMoved = false;
 		}
 		foreach(Refinery r in refineries){
@@ -846,6 +863,7 @@ public class GameController : MonoBehaviour {
 		}
 		foreach(Player p in players){
 			p.actionCounter = 4;
+			p.IncreaseCommodity(p.homeCity.resource);
 		}
 		gamePhase = GamePhase.TradeMatrix;
 		nextPlayer = true;

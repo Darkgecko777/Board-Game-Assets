@@ -95,8 +95,10 @@ private Player sender, receiver;
 	#region Buttons
 	// Adds the corresponding commodity to the payment list to produce an item
 	public void ButtonClick(string s){
-		Commodity.CommodityType ct = Commodity.ConvertString(s); 
-		deposit.Add(new Commodity(ct)); // stores commodity if needed for refund
+		Commodity.CommodityType ct = Commodity.ConvertString(s);
+		if(game.gamePhase != GameController.GamePhase.Setup){ 
+			deposit.Add(new Commodity(ct)); // stores commodity if needed for refund
+		}
 		if(game.gamePhase == GameController.GamePhase.Setup){ // activates buttons for use in setting default commodities
 			game.players[game.activePlayer].homeCity.resource = new Commodity(ct);
 			payment.Clear();
@@ -108,8 +110,7 @@ private Player sender, receiver;
 				game.nextPlayer = true;
 				StartCoroutine(game.CoMatrix());
 			}
-		}
-		if(refineryAction){
+		} else if(refineryAction){
 			if (ct == Commodity.CommodityType.Wood || ct == Commodity.CommodityType.Stone){
 				Commodity a = payment.Find(t => t.ct == Commodity.CommodityType.Wood);
 				Commodity b = payment.Find(t => t.ct == Commodity.CommodityType.Stone);
@@ -353,6 +354,7 @@ private Player sender, receiver;
 		myUI.TogglePanel(myUI.refineryPanel);
 		rTile.actionCounter[game.activePlayer] = true;
 		payment.Clear();
+		refineryAction = false;
 	}
 	#endregion
 	// create a boolean that checks to see if the specified commodity is needed to pay for the selected item

@@ -22,9 +22,8 @@ public class GameComponents {
 
 public class Peasant : GameComponents {
 
-	private string terrain;
-	private Tile tile;
-
+	//private string terrain;
+	public Tile tile;
 	public bool hasMoved;
 
 	public Peasant(int pc, Tile t){

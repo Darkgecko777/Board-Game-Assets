@@ -106,7 +106,6 @@ public class UIController : MonoBehaviour {
 			basicResourcestxt.text = "";
 			advancedResourcestxt.text = "";
 			advancedResourcestxt.text = ""; 
-			matrixText.text = "";
 			exotictxt.text = "";
 			for (int y = 0; y < 6; y++){
 				// int values
@@ -135,23 +134,6 @@ public class UIController : MonoBehaviour {
 						advancedResourcestxt.text = tile.advResource.ToString();
 					} else {
 						advancedResourcestxt.text = "None";
-					}
-					if(tile.tt == Tile.TerrainType.City){
-						int i = tile.influence.IndexOf(true);
-						if(game.players[i].basicResources.Contains(true)){ 
-							string resourceDisplay = game.players[i].basicResourcesType.ElementAt
-							(game.players[i].basicResources.IndexOf(true)).ToString();
-							string advResourceDisplay = game.players[i].advancedResourcesType.ElementAt
-							(game.players[i].advancedResources.IndexOf(true)).ToString() ;
-							string goodsDisplay = game.players[i].basicGoodsType.ElementAt(game.players[i].basicGoods.
-							IndexOf(true)).ToString();
-							string advGoodsDisplay = game.players[i].advancedGoodsType.ElementAt
-							(game.players[i].advancedGoods.IndexOf(true)).ToString();
-							matrixText.text = resourceDisplay + "\n" + advResourceDisplay + "\n" + 
-							goodsDisplay + "\n" + advGoodsDisplay;
-						} else {
-							matrixText.text = "Unselected";
-						}
 					}
 					//combatText.text = tile.index.ToString(); // for testing
 					if (tile.exotic){
@@ -208,7 +190,8 @@ public class UIController : MonoBehaviour {
 					if (!tile.influence.Contains(true)){
 					influencetxt.text = "None";
 					}
-				if(Input.GetMouseButtonDown(0) && tile.tt == Tile.TerrainType.City){
+				if(Input.GetMouseButtonDown(0) && tile.tt == Tile.TerrainType.City && game.gamePhase 
+				== GameController.GamePhase.Actions){
 					TogglePanel(matrixPanel);
 				}
 			} 

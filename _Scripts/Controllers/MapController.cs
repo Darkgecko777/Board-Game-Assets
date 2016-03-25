@@ -79,7 +79,6 @@ public class MapController : MonoBehaviour {
 		playerStart.Add(grid.TileAt(-3,0,3));
 		playerStart.Add(grid.TileAt(-3,3,0));
 
-
 		MakeMap();
 		SetLocalTiles();
 		SetCoastalTiles();
