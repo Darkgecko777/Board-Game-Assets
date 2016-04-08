@@ -119,11 +119,6 @@ public class Unique : GameComponents {
 		this.cost.Add(new Commodity(Commodity.CommodityType.Wheat));
 		this.cost.Add(new Commodity(Commodity.CommodityType.WildGame));
 		this.cost.Add(new Commodity(Commodity.CommodityType.WildGame));
-		this.cost.Add(new Commodity(Commodity.CommodityType.Wheat));
-		this.cost.Add(new Commodity(Commodity.CommodityType.WildGame));
-		this.cost.Add(new Commodity(Commodity.CommodityType.Stone));
-		this.cost.Add(new Commodity(Commodity.CommodityType.Wood));
-		this.cost.Add(new Commodity(Commodity.CommodityType.Ore));
 	}
 
 	public bool CombatRoll(){

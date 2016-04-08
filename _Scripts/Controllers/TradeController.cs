@@ -16,12 +16,13 @@ private List<Commodity> deposit = new List<Commodity>(); // temporarily store co
 private List<Commodity> payment= new List<Commodity>(); // list of commodities needed to produce each gamecomponent
 private List<GameComponents> queue = new List<GameComponents>(); // stores built components till action is complete
 private GameComponents gc; // variable to access produce cost and to build when payment is complete
-private int currentGC; // stores the int in the dropdown list for use with refund
+private int currentProduction; // stores the int in the dropdown list for use with refund
 private Tile rTile, hTile; // used to build refineries and peasants
-private Player sender, receiver;
+private Player sender, receiver, activePlayer;  
 
 	void Update(){
 		ActivateButtons();
+		activePlayer = game.players[game.activePlayer];
 		UpdateCommodities();
 	}
 
@@ -29,68 +30,74 @@ private Player sender, receiver;
 	// method for setting the production cost of each item from the ui dropdown list.  Displays the required commodities as 
 	// a string.  Sets payment to their cost, allowing specific commodity buttons to be active for use
 	public void SetProduceCost(int item){
-		currentGC = item;
-		switch(item){
-			case 0: // peasant
+		currentProduction = item;
+		string ProductionName = myUI.productionDD.captionText.text;
+		switch(ProductionName){
+			case "Peasant": // peasant
 			payment.Clear();
-			hTile = game.players[game.activePlayer].homeCity;
+			hTile = activePlayer.homeCity;
 			gc = new Peasant(game.activePlayer, hTile);
 			myUI.produceCost.text = "2 Wheat or Wild Game";
-			payment= gc.cost;
+			payment = gc.cost;
+			Debug.Log("Peasant");
 				break;
-			case 1: // burgher
+			case "Burgher": // burgher
 			payment.Clear();
 			gc = new Burgher(game.activePlayer);
 			myUI.produceCost.text = "1 Wheat or Wild Game\r\n1 Spidersilk";
-			payment= gc.cost;
+			payment = gc.cost;
+			Debug.Log("Burgher");
 				break;
-			case 2: // Warrior
+			case "Warrior": // Warrior
 			payment.Clear();
 			gc = new Warrior(game.activePlayer);
 			myUI.produceCost.text = "2 Wheat or Wild Game\r\n1 Dragonbone\r\n1 Ore" ;
-			payment= gc.cost;
+			payment = gc.cost;
 			break;
-			case 3: // Unique
+			case "Unique": // Unique
 			payment.Clear();
 			gc = new Unique(game.activePlayer);
 			myUI.produceCost.text = "2 Wheat or Wild Game\r\n2 Racial Commodities";
-			payment= gc.cost;
+			payment = gc.cost;
+			payment.Add(activePlayer.homeCity.resource);
+			payment.Add(activePlayer.homeCity.resource);
 			break;
-			case 4: // Botanist
-			payment.Clear();
-			gc = new Botanist(game.activePlayer);
-			myUI.produceCost.text = "1 Wheat\n1 Ore";
-			payment= gc.cost;
-			break;
-			case 5: // Druid's Circle
-			payment.Clear();
-			gc = new DruidsCircle(game.activePlayer);
-			myUI.produceCost.text = "1 Wood\n1 Stone";
-			payment= gc.cost;
-			break;
-			case 6: // Ranch
-			payment.Clear();
-			gc = new Ranch(game.activePlayer);
-			myUI.produceCost.text = "1 Wild Game\n1 Wood ";
-			payment= gc.cost;
-			break;
-			case 7: // Adventurer's Guild
-			payment.Clear();
-			gc = new AdventurersGuild(game.activePlayer);
-			myUI.produceCost.text = "1 Stone\n1 Wood";
-			payment= gc.cost;
-			break;
-			case 8: // Miner's Guild
-			payment.Clear();
-			gc = new MinersGuild(game.activePlayer);
-			myUI.produceCost.text = "1 Ore\r\n1 Wood";
-			payment= gc.cost;
-			break;
+//			case 4: // Botanist
+//			payment.Clear();
+//			gc = new Botanist(game.activePlayer);
+//			myUI.produceCost.text = "1 Wheat\n1 Ore";
+//			payment= gc.cost;
+//			break;
+//			case 5: // Druid's Circle
+//			payment.Clear();
+//			gc = new DruidsCircle(game.activePlayer);
+//			myUI.produceCost.text = "1 Wood\n1 Stone";
+//			payment= gc.cost;
+//			break;
+//			case 6: // Ranch
+//			payment.Clear();
+//			gc = new Ranch(game.activePlayer);
+//			myUI.produceCost.text = "1 Wild Game\n1 Wood ";
+//			payment= gc.cost;
+//			break;
+//			case 7: // Adventurer's Guild
+//			payment.Clear();
+//			gc = new AdventurersGuild(game.activePlayer);
+//			myUI.produceCost.text = "1 Stone\n1 Wood";
+//			payment= gc.cost;
+//			break;
+//			case 8: // Miner's Guild
+//			payment.Clear();
+//			gc = new MinersGuild(game.activePlayer);
+//			myUI.produceCost.text = "1 Ore\r\n1 Wood";
+//			payment= gc.cost;
+//			break;
 			default:
 				break;
 		}
 	}
 	#endregion
+
 
 	#region Buttons
 	// Adds the corresponding commodity to the payment list to produce an item
@@ -100,7 +107,7 @@ private Player sender, receiver;
 			deposit.Add(new Commodity(ct)); // stores commodity if needed for refund
 		}
 		if(game.gamePhase == GameController.GamePhase.Setup){ // activates buttons for use in setting default commodities
-			game.players[game.activePlayer].homeCity.resource = new Commodity(ct);
+			activePlayer.homeCity.resource = new Commodity(ct);
 			payment.Clear();
 			myUI.resourcePanel.SetActive(!myUI.resourcePanel.activeSelf);
 			game.NextPlayer();
@@ -133,7 +140,7 @@ private Player sender, receiver;
 				Commodity a = payment.Find(t => t.ct == ct);
 				payment.Remove(a);
 			}
-			game.players[game.activePlayer].DecreaseCommodity(ct,1);
+			activePlayer.DecreaseCommodity(ct,1);
 			List<string> payed = new List<string>();
 			foreach(Commodity c in deposit){
 				payed.Add(c.ToString());
@@ -149,7 +156,7 @@ private Player sender, receiver;
 				Commodity a = payment.Find(t => t.ct == ct);
 				payment.Remove(a);
 			}
-			game.players[game.activePlayer].DecreaseCommodity(ct,1);
+			activePlayer.DecreaseCommodity(ct,1);
 			List<string> payed = new List<string>();
 			foreach(Commodity c in deposit){
 				payed.Add(c.ToString());
@@ -159,7 +166,7 @@ private Player sender, receiver;
 			Commodity sale = new Commodity(ct);
 			sender.gold += sale.value;
 			receiver.IncreaseCommodity(sale.ct, 1);
-			game.players[game.activePlayer].DecreaseCommodity(sale.ct, 1);
+			activePlayer.DecreaseCommodity(sale.ct, 1);
 			sales ++;
 			if (sales == 2){
 				caravanActive = false;
@@ -171,7 +178,7 @@ private Player sender, receiver;
 			Commodity sale = new Commodity(ct);
 			sender.gold += sale.value;
 			receiver.IncreaseCommodity(sale.ct, 1);
-			game.players[game.activePlayer].DecreaseCommodity(sale.ct, 1);
+			activePlayer.DecreaseCommodity(sale.ct, 1);
 			sales ++;
 			if (sales == 1){
 				shippingActive = false;
@@ -181,9 +188,15 @@ private Player sender, receiver;
 			}
 		}
 	}
+
+	public void SetProductionDropdown(){
+		myUI.productionDD.ClearOptions();
+		myUI.productionDD.AddOptions(FillProduceList());
+	}
+
 	// closes all panels and completes action
 	public void CompleteProduction(){
-		Tile hc = game.players[game.activePlayer].homeCity;
+		Tile hc = activePlayer.homeCity;
 		foreach(GameComponents g in queue){
 			hc.gameComponents.Add(g);
 		}
@@ -195,42 +208,47 @@ private Player sender, receiver;
 	// Refunds current list of commodites to player
 	public void ClearPayment(){
 		foreach(Commodity c in deposit){
-			game.players[game.activePlayer].IncreaseCommodity(c.ct,1);
+			activePlayer.IncreaseCommodity(c.ct,1);
 		}
 		deposit.Clear();
-		SetProduceCost(currentGC);
+		SetProduceCost(currentProduction);
 		myUI.ProducePayment.text = "";
 	}
 	// Alternate refund for refineries
 	public void ClearRefinery(){
 		foreach(Commodity c in deposit){
-			game.players[game.activePlayer].IncreaseCommodity(c.ct,1);
+			activePlayer.IncreaseCommodity(c.ct,1);
 		}
 		deposit.Clear();
-		RefineryProduction(currentGC);
+		RefineryProduction(currentProduction);
 		myUI.refineryPayment.text = "";
 	}
 	// Creates the currently selected and payed component on the active players city 
 	public void Produce(){
 		deposit.Clear();
 		queue.Add(gc);
+		activePlayer.units.Remove(activePlayer.units.
+			Find(t => t.GetType() == gc.GetType()));
 		queueCount ++;
-		SetProduceCost(currentGC);
+		SetProduceCost(currentProduction);
 		myUI.produceQueue.text += "\n" + gc.ToString();
+		Debug.Log(activePlayer.units.Where(t => t.GetType() == typeof(Peasant)).Count().ToString());
+		SetProductionDropdown();
+
 	}
 	#endregion
 
 	#region Trade Matrix
 	// Opens trade matrix panel to set initial trade values
 	public void InitializeTradeMatrix(){
+		myUI.matrixPanel.SetActive(!myUI.matrixPanel.activeSelf);
 		game.nextPlayer = false;
 		myUI.actionText.text = "Please initialize your trade matrix.";
-		myUI.matrixPanel.SetActive(!myUI.matrixPanel.activeSelf);
-		// passes default value in case none are changed
-		BasicResourcesMatrixValues(0);
-		AdvancedResourcesMatrixValues(0);
-		BasicGoodsMatrixValues(0);
-		AdvancedGoodsMatrixValues(0);
+		myUI.resourcesDD.captionText.text = activePlayer.bResources.ToString();
+		Debug.Log(activePlayer.playerNumber.ToString());
+		myUI.advResourcesDD.captionText.text = activePlayer.advResources.ToString();
+		myUI.goodsDD.captionText.text = activePlayer.bGoods.ToString();
+		myUI.advGoodsDD.captionText.text = activePlayer.advGoods.ToString();
 	}
 	// Closes trade matrix
 	public void CompleteTradeMatrix(){
@@ -247,29 +265,16 @@ private Player sender, receiver;
 
 	// corresponds to dropdown trade matrix
 	public void BasicResourcesMatrixValues(int i){
-		for (int r = 0; r < 5; r++){
-			game.players[game.activePlayer].basicResources[r] = false;
-		}
-		game.players[game.activePlayer].basicResources[i] = true;
+		activePlayer.bResources = (Player.BasicResources)i;
 	}
-
 	public void AdvancedResourcesMatrixValues(int i){
-		for (int r = 0; r < 5; r++){
-			game.players[game.activePlayer].advancedResources[r] = false;
-		}
-		game.players[game.activePlayer].advancedResources[i] = true;
+		activePlayer.advResources = (Player.AdvancedResources)i;
 	}
 	public void BasicGoodsMatrixValues(int i){
-		for (int r = 0; r < 5; r++){
-			game.players[game.activePlayer].basicGoods[r] = false;
-		}
-		game.players[game.activePlayer].basicGoods[i] = true;
+		activePlayer.bGoods = (Player.BasicGoods)i;
 	}
 	public void AdvancedGoodsMatrixValues(int i){
-		for (int r = 0; r < 5; r++){
-			game.players[game.activePlayer].advancedGoods[r] = false;
-		}
-		game.players[game.activePlayer].advancedGoods[i] = true;
+		activePlayer.advGoods = (Player.AdvancedGoods)i;	
 	}
 	#endregion
 	public void InitializeRacialCommodity(){
@@ -287,30 +292,25 @@ private Player sender, receiver;
 	public void Caravan(Player s, Player r){
 		sender = s;
 		receiver = r;
-		Commodity resourceSale = new Commodity(receiver.basicResourcesType.ElementAt(receiver.basicResources.IndexOf(true)));
-		Commodity advResourceSale = new Commodity(receiver.advancedResourcesType.ElementAt(receiver.advancedResources.IndexOf
-			(true)));;
-		Commodity goodsSale = new Commodity(receiver.basicGoodsType.ElementAt(receiver.basicGoods.IndexOf(true)));;
-		Commodity advGoodsSale = new Commodity(receiver.advancedGoodsType.ElementAt(receiver.advancedGoods.IndexOf
-			(true)));;
+		Commodity resourceSale = new Commodity(Commodity.ConvertString(receiver.bResources.ToString())); 
+		Commodity advResourceSale = new Commodity(Commodity.ConvertString(receiver.advResources.ToString()));
+		Commodity goodsSale = new Commodity(Commodity.ConvertString(receiver.bGoods.ToString()));
+		Commodity advGoodsSale = new Commodity(Commodity.ConvertString(receiver.advGoods.ToString()));
 		payment.Add(resourceSale);
 		payment.Add(advResourceSale);
 		payment.Add(goodsSale);
 		payment.Add(advGoodsSale);
 		myUI.resourcePanel.SetActive(!myUI.resourcePanel.activeSelf);
-		//UpdateCommodities();
 		caravanActive = true;
 	}
 
 	public void Shipping(Player s, Player r){
 		sender = s;
 		receiver = r;
-		Commodity resourceSale = new Commodity(receiver.basicResourcesType.ElementAt(receiver.basicResources.IndexOf(true)));
-		Commodity advResourceSale = new Commodity(receiver.advancedResourcesType.ElementAt(receiver.advancedResources.IndexOf
-			(true)));;
-		Commodity goodsSale = new Commodity(receiver.basicGoodsType.ElementAt(receiver.basicGoods.IndexOf(true)));;
-		Commodity advGoodsSale = new Commodity(receiver.advancedGoodsType.ElementAt(receiver.advancedGoods.IndexOf
-			(true)));;
+		Commodity resourceSale = new Commodity(Commodity.ConvertString(receiver.bResources.ToString())); 
+		Commodity advResourceSale = new Commodity(Commodity.ConvertString(receiver.advResources.ToString()));
+		Commodity goodsSale = new Commodity(Commodity.ConvertString(receiver.bGoods.ToString()));
+		Commodity advGoodsSale = new Commodity(Commodity.ConvertString(receiver.advGoods.ToString()));
 		payment.Add(resourceSale);
 		payment.Add(advResourceSale);
 		payment.Add(goodsSale);
@@ -329,7 +329,7 @@ private Player sender, receiver;
 	}
 
 	public void RefineryProduction(int r){
-		currentGC = r;
+		currentProduction = r;
 		switch(r){
 			case 0:
 			payment.Clear();
@@ -372,12 +372,12 @@ private Player sender, receiver;
   			Text[] info = myUI.commodoties[i].GetComponentsInChildren<Text>(); // takes each of the text components of the button
   			// and assigns them to an array for easy use 
 			string c = info[0].text;
-			info[1].text = game.players[game.activePlayer].commodities[Commodity.ConvertString(c)].amount.ToString();
+			info[1].text = activePlayer.commodities[Commodity.ConvertString(c)].amount.ToString();
 			if(game.gamePhase == GameController.GamePhase.Setup && 
-				commodityNeeded(game.players[game.activePlayer].commodities[Commodity.ConvertString(c)])){
+				commodityNeeded(activePlayer.commodities[Commodity.ConvertString(c)])){
 					b.interactable = true;
-			} else if(commodityNeeded(game.players[game.activePlayer].commodities[Commodity.ConvertString(c)]) 
-				&& game.players[game.activePlayer].commodities[Commodity.ConvertString(c)].amount > 0){
+			} else if(commodityNeeded(activePlayer.commodities[Commodity.ConvertString(c)]) 
+				&& activePlayer.commodities[Commodity.ConvertString(c)].amount > 0){
   				b.interactable = true;
   			} else {
   				b.interactable = false;
@@ -402,21 +402,122 @@ private Player sender, receiver;
 		}
 		if(game.gamePhase != GameController.GamePhase.TradeMatrix){
 			myUI.closeMatrix.interactable = false;
-			myUI.resources.interactable = false;
-			myUI.advResources.interactable = false;
-			myUI.goods.interactable = false;
-			myUI.advGoods.interactable = false;
+			myUI.resourcesDD.interactable = false;
+			myUI.advResourcesDD.interactable = false;
+			myUI.goodsDD.interactable = false;
+			myUI.advGoodsDD.interactable = false;
 		} else {
 			myUI.closeMatrix.interactable = true;
-			myUI.resources.interactable = true;
-			myUI.advResources.interactable = true;
-			myUI.goods.interactable = true;
-			myUI.advGoods.interactable = true;
+			myUI.resourcesDD.interactable = true;
+			myUI.advResourcesDD.interactable = true;
+			myUI.goodsDD.interactable = true;
+			myUI.advGoodsDD.interactable = true;
 		}
 		if(!payment.Any() && gc != null && (gc.GetType() == typeof(Refinery) || gc.GetType() == typeof(AdvancedRefinery))){
 			myUI.refineryProduce.interactable = true;
 		} else {
 			myUI.refineryProduce.interactable = false;
 		}
+	}
+
+	#region Production Booleans
+// Booleans to check if any given item can be built by the active player.  Corresponds to dropdown list
+
+	private bool BuildPeasant(){
+		if (((activePlayer.commodities[Commodity.CommodityType.Wheat].amount > 1 ||
+			activePlayer.commodities[Commodity.CommodityType.WildGame].amount > 1) ||
+			(activePlayer.commodities[Commodity.CommodityType.Wheat].amount > 0 &&
+			activePlayer.commodities[Commodity.CommodityType.WildGame].amount > 0)) 
+			&& activePlayer.units.Where(t => t.GetType() == typeof(Peasant)).Any()){
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private bool BuildBurgher(){
+		if ((activePlayer.commodities[Commodity.CommodityType.Wheat].amount > 0 ||
+			activePlayer.commodities[Commodity.CommodityType.WildGame].amount > 0) &&
+			activePlayer.commodities[Commodity.CommodityType.Spidersilk].amount > 0 
+			&& activePlayer.units.Where(t => t.GetType() == typeof(Burgher)).Any()){
+			return true;
+		} else {
+			return false;
+		}
+	}	
+		
+	private bool BuildWarrior(){
+		if ((activePlayer.commodities[Commodity.CommodityType.Wheat].amount > 1 ||
+			activePlayer.commodities[Commodity.CommodityType.WildGame].amount > 1 ||
+			(activePlayer.commodities[Commodity.CommodityType.Wheat].amount > 0 &&
+			activePlayer.commodities[Commodity.CommodityType.WildGame].amount > 0)) && 
+			activePlayer.commodities[Commodity.CommodityType.Dragonbone].amount > 0 &&
+			activePlayer.commodities[Commodity.CommodityType.Ore].amount > 0
+			&& activePlayer.units.Where(t => t.GetType() == typeof(Warrior)).Any()){
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private bool BuildUnique(){
+		if ((activePlayer.commodities[Commodity.CommodityType.Wheat].amount > 1 ||
+			activePlayer.commodities[Commodity.CommodityType.WildGame].amount > 1 ||
+			(activePlayer.commodities[Commodity.CommodityType.Wheat].amount > 0 &&
+			activePlayer.commodities[Commodity.CommodityType.WildGame].amount > 0)) &&
+			activePlayer.commodities[activePlayer.homeCity.resource.ct].amount > 1
+			&& activePlayer.units.Where(t => t.GetType() == typeof(Unique)).Any()){
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private bool BuildBasicRefinery(){
+		if ((activePlayer.commodities[Commodity.CommodityType.Wood].amount > 0 ||
+			activePlayer.commodities[Commodity.CommodityType.Stone].amount > 0) &&
+			activePlayer.commodities[Commodity.CommodityType.Ore].amount > 0){
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private bool BuildAdvancedRefinery(){
+		if ((activePlayer.commodities[Commodity.CommodityType.Wood].amount > 0 ||
+			activePlayer.commodities[Commodity.CommodityType.Stone].amount > 0) &&
+			activePlayer.commodities[Commodity.CommodityType.Ore].amount > 0 &&
+			(activePlayer.commodities[Commodity.CommodityType.Fruit].amount > 0 ||
+			activePlayer.commodities[Commodity.CommodityType.Livestock].amount > 0 ||
+			activePlayer.commodities[Commodity.CommodityType.Spidersilk].amount > 0 ||
+			activePlayer.commodities[Commodity.CommodityType.Gems].amount > 0 ||
+			activePlayer.commodities[Commodity.CommodityType.Dragonbone].amount > 0)){
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private List<string> FillProduceList(){
+		List<string> myList = new List<string>();
+		if (BuildPeasant()){
+			myList.Add("Peasant");
+		}
+		if (BuildBurgher()){
+			myList.Add("Burgher");
+		}
+		if (BuildWarrior()){
+			myList.Add("Warrior");
+		}
+		if (BuildUnique()){
+			myList.Add("Unique");
+		}
+		return myList;
+	}
+	#endregion
+
+	public void TestButton(){
+		Debug.Log(activePlayer.bResources.ToString());
+		Debug.Log(activePlayer.playerNumber.ToString());
 	}
 }

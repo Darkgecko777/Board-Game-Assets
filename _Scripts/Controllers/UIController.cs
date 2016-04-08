@@ -39,7 +39,7 @@ public class UIController : MonoBehaviour {
 	public bool[] containsPlayerUnits = new bool[6];
 	public Text combatText, matrixText; // used for testing
 
-	public Dropdown resources, advResources, goods, advGoods;
+	public Dropdown resourcesDD, advResourcesDD, goodsDD, advGoodsDD, productionDD;
 
 	// action buttons and buttons for production and exploration
 	public Button scout, explore, influence, caravan, shipping, investigate, hunt, refinery, production, assassinate,
@@ -51,6 +51,7 @@ public class UIController : MonoBehaviour {
 			playerstxt[i].text = (game.players[i].playerNumber + 1).ToString();
 			goldtxt[i].text = (game.players[i].gold).ToString();
 		}
+
 	}
 
 	void Update () {
@@ -88,12 +89,11 @@ public class UIController : MonoBehaviour {
 	}
 	// Function that sets all the tiles to their appropriate player colour based on control
 	public void UpdateInfluence(){
-		for (int i = 0; i < 6; i++)
-			foreach(Tile tile in grid.Tiles.Values){
-				if (tile.influence[i]){
-					tile.LineColour(game.playerColours[i]);
-					tile.LineWidth(.08f);	
-			} else if (!tile.influence.Contains(true)){
+		foreach(Tile tile in grid.Tiles.Values){
+			if (tile.influence != Tile.Influence.None){
+				tile.LineColour(game.playerColours[(int)tile.influence]);
+				tile.LineWidth(.08f);	
+			} else {
 				tile.LineColour(Color.black);
 				tile.LineWidth(.03f,.03f);
 			}
@@ -178,21 +178,24 @@ public class UIController : MonoBehaviour {
 						}
 
 						// boolean values 
-						if (tile.influence[y]){
-							influencetxt.text = "Player " + (y + 1);
-							}
 						if (tile.actionCounter[y]){
 							actionCounterstxt[y].text = "Y";
 						} else if (!tile.actionCounter[y]){
 							actionCounterstxt[y].text = "";
 							}
 					}
-					if (!tile.influence.Contains(true)){
-					influencetxt.text = "None";
+					if (tile.influence == Tile.Influence.None){
+						influencetxt.text = "None";
+					} else {
+						influencetxt.text = "Player " + ((int)tile.influence + 1);
 					}
 				if(Input.GetMouseButtonDown(0) && tile.tt == Tile.TerrainType.City && game.gamePhase 
 				== GameController.GamePhase.Actions){
 					TogglePanel(matrixPanel);
+					resourcesDD.captionText.text = game.players[(int)tile.influence].bResources.ToString();
+					advResourcesDD.captionText.text = game.players[(int)tile.influence].advResources.ToString();
+					goodsDD.captionText.text = game.players[(int)tile.influence].bGoods.ToString();
+					advGoodsDD.captionText.text = game.players[(int)tile.influence].advGoods.ToString();
 				}
 			} 
 		}

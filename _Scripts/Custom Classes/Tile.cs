@@ -14,7 +14,8 @@ public class Tile : MonoBehaviour {
 
 	//Player Components
 	public List<bool> actionCounter = new List<bool>(){false, false, false, false, false, false};
-	public List<bool> influence = new List<bool>(){false, false, false, false, false, false};
+	public enum Influence {PlayerOne, PlayerTwo, PlayerThree, PlayerFour, PlayerFive, PlayerSix, None};
+	public Influence influence = Tile.Influence.None;
 	public List<bool> basicRefinery = new List<bool>(){false, false, false, false, false, false};
 	public List<bool> advancedRefinery = new List<bool>(){false, false, false, false, false, false};
 	public List<GameComponents> gameComponents = new List<GameComponents>();

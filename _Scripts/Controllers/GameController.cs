@@ -23,19 +23,22 @@ public class GameController : MonoBehaviour {
 	public GamePhase gamePhase; 
 
 	#region Setup
-	void Start(){
+	void Awake(){
 		board.StartUp(); //uses the map generator to create the board
 		gamePhase = GamePhase.Setup;
 		foreach (Tile pc in board.playerStart){ // sets starting units for each city tile and adjusts player pools
 			players[activePlayer] =  new Player(activePlayer);
 			players[activePlayer].homeCity = pc;
-			pc.influence[activePlayer] = true;
+			pc.influence = (Tile.Influence)activePlayer;
 			myUI.UpdateInfluence();
-			pc.gameComponents.Add(new Peasant(activePlayer, pc));
-			pc.gameComponents.Add(new Peasant(activePlayer, pc));
-			pc.gameComponents.Add(new Burgher(activePlayer));
-			pc.gameComponents.Add(new Burgher(activePlayer));
-			pc.gameComponents.Add(new Burgher(activePlayer));
+			for(int p = 0; p < 2; p++){
+				pc.gameComponents.Add(new Peasant(activePlayer, pc));
+				players[activePlayer].units.Remove(players[activePlayer].units.Find(x => x.GetType() == typeof(Peasant)));
+			}
+			for(int b = 0; b < 3; b++){
+				pc.gameComponents.Add(new Burgher(activePlayer));
+				players[activePlayer].units.Remove(players[activePlayer].units.Find(x => x.GetType() == typeof(Burgher)));
+			}
 			players[activePlayer].IncreaseCommodity(Commodity.CommodityType.Wheat, 4);
 			players[activePlayer].IncreaseCommodity(Commodity.CommodityType.WildGame, 4);
 			players[activePlayer].IncreaseCommodity(Commodity.CommodityType.Wood, 4);
@@ -216,8 +219,8 @@ public class GameController : MonoBehaviour {
 	}
 
 	public bool CaravanConnected(Player sender, Player receiver){
-		List<Tile> senderInfluenced = grid.Tiles.Values.Where(t => t.influence[sender.playerNumber]).ToList();
-		List<Tile> receieverInfluenced = grid.Tiles.Values.Where(t => t.influence[receiver.playerNumber]).ToList();
+		List<Tile> senderInfluenced = grid.Tiles.Values.Where(t => t.influence == (Tile.Influence)sender.playerNumber).ToList();
+		List<Tile> receieverInfluenced = grid.Tiles.Values.Where(t => t.influence == (Tile.Influence)receiver.playerNumber).ToList();
 		bool cc = false;
 		foreach(Tile t in senderInfluenced){
 			if(grid.Neighbours(t).Intersect(receieverInfluenced).Any()){
@@ -229,7 +232,7 @@ public class GameController : MonoBehaviour {
 
 	public bool ShippingConnected(Player sender){
 		bool cc = false;
-		if(grid.Neighbours(players[activePlayer].homeCity).Where(t => t.influence[activePlayer] &&
+		if(grid.Neighbours(players[activePlayer].homeCity).Where(t => t.influence == (Tile.Influence)activePlayer &&
 			t.tt == Tile.TerrainType.Coastal).Any()){
 				cc = true;
 			}
@@ -253,7 +256,7 @@ public class GameController : MonoBehaviour {
 	public bool CanTransplant(){
 		bool ct = false;
 			foreach(Tile t in grid.Tiles.Values){
-				if(t.influence[activePlayer] && grid.Neighbours(t).Find(c => c.gameComponents.Where(p => p.GetType() == typeof(Peasant)
+				if(t.influence == (Tile.Influence)activePlayer && grid.Neighbours(t).Find(c => c.gameComponents.Where(p => p.GetType() == typeof(Peasant)
 				&& p.playerController == activePlayer && !(p as Peasant).hasMoved).Any())){
 					 ct = true;
 				}
@@ -276,7 +279,7 @@ public class GameController : MonoBehaviour {
 	public bool CanExplore(){
 		bool ce = false;
 		foreach(Tile t in grid.Tiles.Values){
-			if (t.influence[activePlayer] && grid.Neighbours(t).Where(e => e.tt == Tile.TerrainType.Unexplored).Any()){
+			if (t.influence ==  (Tile.Influence)activePlayer && grid.Neighbours(t).Where(e => e.tt == Tile.TerrainType.Unexplored).Any()){
 				ce = true;
 			}
 		}
@@ -286,8 +289,8 @@ public class GameController : MonoBehaviour {
 	public bool CanInfluence(){
 		bool ci = false;
 		foreach(Tile t in grid.Tiles.Values){
-			if (!t.influence[activePlayer] && t.tt != Tile.TerrainType.Unexplored && t.tt != Tile.TerrainType.City
-			&& grid.Neighbours(t).Find(i => i.influence[activePlayer])){
+			if (t.influence != (Tile.Influence)activePlayer && t.tt != Tile.TerrainType.Unexplored && t.tt != Tile.TerrainType.City
+			&& grid.Neighbours(t).Find(i => i.influence == (Tile.Influence)activePlayer)){
 			ci = true;
 			}
 		}
@@ -297,8 +300,9 @@ public class GameController : MonoBehaviour {
 	public bool CanCaravan(){
 		bool cc = false;
 		foreach(Tile t in grid.Tiles.Values){
-			if(t.influence[activePlayer] && grid.Neighbours(t).Find(c => !c.influence[activePlayer] && c.influence.Contains(true) 
-			&& !players[c.influence.IndexOf(true)].homeCity.actionCounter[activePlayer])){
+			if(t.influence == (Tile.Influence)activePlayer && grid.Neighbours(t).Find(c => c.influence != (Tile.Influence)activePlayer 
+			&& c.influence != Tile.Influence.None 
+			&& !players[(int)t.influence].homeCity.actionCounter[activePlayer])){
 				cc = true;
 			}
 		}
@@ -308,8 +312,8 @@ public class GameController : MonoBehaviour {
 	public bool CanShip(){
 		bool cs = false;
 		foreach(Tile t in grid.Tiles.Values){
-			if(t.influence[activePlayer] && t.tt == Tile.TerrainType.Coastal 
-			&& board.playerStart.Find(pc => !pc.actionCounter[activePlayer] && !pc.influence[activePlayer])){ 
+			if(t.influence == (Tile.Influence)activePlayer && t.tt == Tile.TerrainType.Coastal 
+			&& board.playerStart.Find(pc => !pc.actionCounter[activePlayer] && pc.influence != (Tile.Influence)activePlayer)){ 
 				cs = true;
 			}
 		}
@@ -406,7 +410,7 @@ public class GameController : MonoBehaviour {
 				break;
 			}
 			if (Input.GetMouseButtonDown (0)){
-				if (SetActiveTile() != null  && SetActiveTile().influence[activePlayer] 
+				if (SetActiveTile() != null  && SetActiveTile().influence == (Tile.Influence)activePlayer 
 				&& grid.Neighbours(SetActiveTile()).Where(t => t.tt == Tile.TerrainType.Unexplored).Any()){
 					SetActiveTile().LineColour(Color.white);
 					SetActiveTile().LineWidth(0.06f,0.06f);
@@ -549,7 +553,7 @@ public class GameController : MonoBehaviour {
 				// needs to check if there is an explored tile without influence or enemy martial units which is adjacent to a 
 				// tile containing influence  
 				if (SetActiveTile() != null   
-					&& !SetActiveTile().influence[activePlayer] && SetActiveTile().tt != Tile.TerrainType.Unexplored 
+					&& SetActiveTile().influence != (Tile.Influence)activePlayer && SetActiveTile().tt != Tile.TerrainType.Unexplored 
 					&& SetActiveTile().tt != Tile.TerrainType.City){
 					SetActiveTile().LineColour(Color.white);
 					SetActiveTile().LineWidth(0.06f,0.06f);
@@ -565,11 +569,10 @@ public class GameController : MonoBehaviour {
 //					}
 					if(Blockaded(primaryTile) == null){
 						// check the tile to see if anyone else influences it, if they do remove influence
-						if (primaryTile.influence.Contains(true)){
-							int i = primaryTile.influence.IndexOf(true);
-							primaryTile.influence[i] = false;
+						if (primaryTile.influence != Tile.Influence.None && primaryTile.influence != (Tile.Influence)activePlayer){
+							primaryTile.influence = Tile.Influence.None;
 						} else {
-							primaryTile.influence[activePlayer] = true;
+							primaryTile.influence = (Tile.Influence)activePlayer;
 						}
 					} else {
 						myUI.actionText.text = "Tile is blockaded";
@@ -600,14 +603,14 @@ public class GameController : MonoBehaviour {
 			}
 			if (Input.GetMouseButtonDown (0)){
 				if (SetActiveTile() != null  && SetActiveTile().tt == Tile.TerrainType.City   
-					&& !SetActiveTile().actionCounter[activePlayer] && !SetActiveTile().influence[activePlayer] &&
-					CaravanConnected(players[activePlayer], players[SetActiveTile().influence.IndexOf(true)])){
+					&& !SetActiveTile().actionCounter[activePlayer] && SetActiveTile().influence != (Tile.Influence)activePlayer &&
+					CaravanConnected(players[activePlayer], players[(int)SetActiveTile().influence])){
 					SetActiveTile().LineColour(Color.white);
 					SetActiveTile().LineWidth(0.06f,0.06f);
 					primaryTile = SetActiveTile();
 					players[activePlayer].actionCounter--;
 					primaryTile.actionCounter[activePlayer] = true;
-					trade.Caravan(players[activePlayer], players[SetActiveTile().influence.IndexOf(true)]);
+					trade.Caravan(players[activePlayer], players[(int)SetActiveTile().influence]);
 				} else {
 					yield return null;
 				}
@@ -633,14 +636,14 @@ public class GameController : MonoBehaviour {
 			}
 			if (Input.GetMouseButtonDown (0)){
 				if (SetActiveTile() != null  && SetActiveTile().tt == Tile.TerrainType.City   
-					&& !SetActiveTile().actionCounter[activePlayer] && !SetActiveTile().influence[activePlayer] 
+					&& !SetActiveTile().actionCounter[activePlayer] && SetActiveTile().influence != (Tile.Influence)activePlayer 
 					&& ShippingConnected(players[activePlayer])){
 					SetActiveTile().LineColour(Color.white);
 					SetActiveTile().LineWidth(0.06f,0.06f);
 					primaryTile = SetActiveTile();
 					players[activePlayer].actionCounter--;
 					primaryTile.actionCounter[activePlayer] = true;
-					trade.Shipping(players[activePlayer], players[SetActiveTile().influence.IndexOf(true)]);
+					trade.Shipping(players[activePlayer], players[(int)SetActiveTile().influence]);
 				} else {
 					yield return null;
 				}
@@ -706,6 +709,7 @@ public class GameController : MonoBehaviour {
 			players[activePlayer].homeCity.actionCounter[activePlayer] = true;
 			players[activePlayer].actionCounter--;
 			myUI.TogglePanel(myUI.producePanel);
+			trade.SetProductionDropdown();
 			trade.SetProduceCost(0); // sets production list to first item
 			trade.queueCount = 0; // used to cap production at 4 components
 			trade.produceAction = true;
@@ -768,8 +772,8 @@ public class GameController : MonoBehaviour {
 		while (!Input.GetMouseButtonDown(1)){
 			yield return null;
 			if (Input.GetMouseButtonDown(1)){
-				if (SetActiveTile() != secondaryTile && SetActiveTile().influence[activePlayer] && grid.Neighbours(secondaryTile)
-				.Contains(SetActiveTile())){ 
+				if (SetActiveTile() != secondaryTile && SetActiveTile().influence == (Tile.Influence)activePlayer 
+				&& grid.Neighbours(secondaryTile).Contains(SetActiveTile())){ 
 					primaryTile = SetActiveTile();
 					myUI.TogglePanel(myUI.TVPanel);
 					myUI.TVDisplay();
@@ -827,8 +831,8 @@ public class GameController : MonoBehaviour {
 		foreach(Tile t in grid.Tiles.Values){
 			for(int i = 0; i < 6; i++){
 				t.actionCounter[i] = false;
-				if(t.influence[i] == true){
-					players[i].gold ++;
+				if(t.influence != Tile.Influence.None){
+					players[(int)t.influence].gold ++;
 				}
 			}
 			foreach(Peasant p in t.gameComponents.Where(g => g.GetType() == typeof(Peasant))){
